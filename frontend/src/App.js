@@ -1,33 +1,37 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Requirements from './pages/Requirements';
 import Modules from './pages/Modules';
-import MainLayout from './components/MainLayout';
-import ProtectedRoute from './components/ProtectedRoute';
-import RobiWidget from './components/RobiWidget';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<ProtectedRoute />}>
-              <Route element={<MainLayout />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/requirements" element={<Requirements />} />
-                <Route path="/modules" element={<Modules />} />
-              </Route>
-            </Route>
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-          <RobiWidget />
-        </BrowserRouter>
-      </ThemeProvider>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: '#0d1117',
+              color: '#e2e8f0',
+              border: '1px solid #1e293b',
+              borderRadius: '8px',
+            },
+          }}
+        />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="requirements" element={<Requirements />} />
+            <Route path="modules" element={<Modules />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

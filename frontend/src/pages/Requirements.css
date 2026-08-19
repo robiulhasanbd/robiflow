@@ -1,0 +1,98 @@
+.req-page { animation: fadeIn 0.4s ease; max-width: 1400px; margin: 0 auto; }
+
+.req-toolbar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
+.search-box { flex: 1; position: relative; display: flex; align-items: center; }
+.search-icon { position: absolute; left: 12px; color: #868e96; pointer-events: none; }
+.search-input {
+  width: 100%; padding: 10px 12px 10px 40px;
+  background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
+  color: #212529; font-size: 14px; outline: none;
+}
+.search-input:focus { border-color: #4C9AFF; box-shadow: 0 0 0 3px rgba(76,154,255,0.1); }
+.search-input::placeholder { color: #adb5bd; }
+.clear-btn { position: absolute; right: 10px; background: none; border: none; color: #868e96; cursor: pointer; }
+
+.filter-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; background: #fff; border: 1px solid #dee2e6;
+  border-radius: 8px; color: #495057; font-size: 14px; cursor: pointer;
+  white-space: nowrap;
+}
+.filter-btn:hover, .filter-btn.active { background: #f1f3f5; }
+
+.filter-panel {
+  display: flex; gap: 12px; align-items: flex-end;
+  padding: 16px; background: #fff; border: 1px solid #e9ecef;
+  border-radius: 8px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.filter-group { display: flex; flex-direction: column; gap: 6px; }
+.filter-group label { font-size: 11px; color: #868e96; text-transform: uppercase; font-weight: 600; }
+.filter-group select {
+  padding: 8px 12px; background: #fff; border: 1px solid #dee2e6;
+  border-radius: 6px; color: #212529; font-size: 13px; outline: none; cursor: pointer;
+}
+
+/* Table */
+.req-table-wrap { overflow-x: auto; }
+.req-table {
+  width: 100%; border-collapse: collapse;
+  background: #fff; border: 1px solid #e9ecef; border-radius: 12px;
+}
+.req-table thead { background: #f8f9fa; }
+.req-table th {
+  padding: 12px 16px; text-align: left; font-size: 11px;
+  color: #868e96; text-transform: uppercase; font-weight: 600;
+  border-bottom: 1px solid #e9ecef;
+}
+.req-table td {
+  padding: 14px 16px; font-size: 13px; color: #212529;
+  border-bottom: 1px solid #f1f3f5;
+}
+.req-row:hover td { background: #f8f9fa; }
+.req-title-cell { font-weight: 500; }
+
+.status-select {
+  padding: 4px 10px; background: #fff; border: 1px solid #dee2e6;
+  border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; outline: none; text-transform: capitalize;
+}
+.priority-badge { font-size: 12px; font-weight: 600; text-transform: capitalize; }
+.progress-cell { display: flex; align-items: center; gap: 8px; }
+.progress-num { font-size: 11px; color: #868e96; }
+.date-cell, .assignee-cell { display: flex; align-items: center; gap: 6px; color: #868e96; font-size: 12px; }
+.action-btn { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; }
+.delete-icon { color: #adb5bd; }
+.action-btn:hover { background: #ffe3e3; }
+.action-btn:hover .delete-icon { color: #fa5252; }
+.empty-row { text-align: center; padding: 40px !important; color: #868e96; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center; z-index: 200;
+}
+.modal-content {
+  background: #fff; border-radius: 16px; padding: 28px;
+  width: 500px; max-width: 90vw; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.modal-title { font-size: 20px; font-weight: 700; color: #212529; margin-bottom: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; flex: 1; }
+.form-group label { font-size: 12px; color: #495057; font-weight: 500; }
+.form-group input, .form-group select {
+  padding: 10px 14px; background: #fff; border: 1px solid #dee2e6;
+  border-radius: 8px; color: #212529; font-size: 14px; outline: none;
+}
+.form-group input:focus, .form-group select:focus { border-color: #4C9AFF; }
+.form-row { display: flex; gap: 12px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+.btn-cancel {
+  padding: 10px 20px; background: #f1f3f5; border: 1px solid #dee2e6;
+  border-radius: 8px; color: #495057; font-size: 14px; cursor: pointer;
+}
+.btn-cancel:hover { background: #e9ecef; }
+
+@media (max-width: 768px) {
+  .req-toolbar { flex-direction: column; }
+  .filter-panel { flex-direction: column; }
+  .form-row { flex-direction: column; }
+}

@@ -1,165 +1,324 @@
-import { useState, useMemo } from 'react';
-import { Search, Filter, AlertCircle, Edit2, ChevronRight, Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useTheme } from '../contexts/ThemeContext';
-import useStore from '../store/useStore';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import { 
+  Plus, Search, Filter, X, Edit2, Trash2, 
+  ChevronDown, Calendar, User, CheckCircle2 
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import './Requirements.css';
+
+const COMPANIES = [
+  'JK Lifestyle', 'JK Tech', 'Health Revolution',
+  'Organic Life', 'Food Arena', 'Fitness Arena'
+];
+
+const STATUS_OPTIONS = ['backlog', 'todo', 'in_progress', 'review', 'completed', 'blocked'];
+const PRIORITY_OPTIONS = ['urgent', 'high', 'medium', 'low'];
+
+const STATUS_COLORS = {
+  backlog: '#64748b',
+  todo: '#4dabf7',
+  in_progress: '#ffd43b',
+  review: '#da77f2',
+  completed: '#69db7c',
+  blocked: '#ff6b6b',
+};
+
+const PRIORITY_COLORS = {
+  urgent: '#ff6b6b',
+  high: '#ff922b',
+  medium: '#ffd43b',
+  low: '#69db7c',
+};
 
 export default function Requirements() {
-  const { darkMode } = useTheme();
-  const { requirements, updateRequirement, addRequirement } = useStore();
+  const [requirements, setRequirements] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterCompany, setFilterCompany] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [filterPriority, setFilterPriority] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [editValue, setEditValue] = useState('');
+  const navigate = useNavigate();
 
-  const companies = [...new Set(requirements.map(r => r.company))];
-  const statuses = [...new Set(requirements.map(r => r.status))];
-  const priorities = [...new Set(requirements.map(r => r.priority))];
+  // New requirement form
+  const [newReq, setNewReq] = useState({
+    title: '', company: 'JK Tech', priority: 'medium', dueDate: '', assignee: ''
+  });
 
-  const t = darkMode ? {
-    card: 'rgba(10, 14, 23, 0.9)', border: 'rgba(255,255,255,0.06)', text: '#e4e4e7', text2: '#a1a1aa', text3: '#52525b',
-    accent: '#06b6d4', accentBg: 'rgba(6,182,212,0.08)', shadow: '0 0 40px rgba(6,182,212,0.05)', mutedBg: 'rgba(255,255,255,0.03)',
-  } : {
-    card: 'rgba(255,255,255,0.95)', border: 'rgba(0,0,0,0.06)', text: '#18181b', text2: '#71717a', text3: '#a1a1aa',
-    accent: '#0891b2', accentBg: 'rgba(8,145,178,0.06)', shadow: '0 1px 3px rgba(0,0,0,0.04)', mutedBg: 'rgba(0,0,0,0.02)',
+  // Demo data
+  const demoRequirements = [
+    { id: '1', title: 'CRM Dashboard Redesign', company: 'JK Lifestyle', status: 'in_progress', priority: 'high', progress: 65, dueDate: '2026-08-20', assignee: 'Robiul' },
+    { id: '2', title: 'AI-Powered Lead Scoring', company: 'JK Tech', status: 'review', priority: 'high', progress: 85, dueDate: '2026-08-15', assignee: 'Aminur' },
+    { id: '3', title: 'Payment Gateway bKash/Nagad', company: 'Food Arena', status: 'todo', priority: 'urgent', progress: 0, dueDate: '2026-09-01', assignee: 'Aziz' },
+    { id: '4', title: 'Mobile Navigation Fix', company: 'JK Lifestyle', status: 'completed', priority: 'medium', progress: 100, dueDate: '2026-07-30', assignee: 'Robiul' },
+    { id: '5', title: 'API Rate Limiting', company: 'JK Tech', status: 'blocked', priority: 'low', progress: 30, dueDate: '2026-08-10', assignee: 'Zawad' },
+    { id: '6', title: 'Inventory Tracking Module', company: 'Health Revolution', status: 'in_progress', priority: 'medium', progress: 45, dueDate: '2026-08-25', assignee: 'Salim' },
+    { id: '7', title: 'Sales Report Dashboard', company: 'Organic Life', status: 'todo', priority: 'high', progress: 0, dueDate: '2026-09-05', assignee: 'Robiul' },
+    { id: '8', title: 'Member Management System', company: 'Fitness Arena', status: 'backlog', priority: 'low', progress: 0, dueDate: '2026-10-01', assignee: 'Aziz' },
+  ];
+
+  useEffect(() => {
+    loadRequirements();
+  }, []);
+
+  const loadRequirements = async () => {
+    try {
+      const res = await api.get('/requirements');
+      setRequirements(res.data);
+    } catch {
+      setRequirements(demoRequirements);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filtered = useMemo(() => {
-    return requirements.filter(r => {
-      if (search && !r.title.toLowerCase().includes(search.toLowerCase())) return false;
-      if (filterCompany && r.company !== filterCompany) return false;
-      if (filterStatus && r.status !== filterStatus) return false;
-      if (filterPriority && r.priority !== filterPriority) return false;
-      return true;
-    });
-  }, [requirements, search, filterCompany, filterStatus, filterPriority]);
-
-  const startEdit = (id, currentProgress) => {
-    setEditingId(id);
-    setEditValue(String(currentProgress));
+  const handleAdd = () => {
+    if (!newReq.title.trim()) {
+      toast.error('Title required!');
+      return;
+    }
+    const newId = Date.now().toString();
+    setRequirements(prev => [
+      { id: newId, ...newReq, status: 'todo', progress: 0 },
+      ...prev
+    ]);
+    setShowAddModal(false);
+    setNewReq({ title: '', company: 'JK Tech', priority: 'medium', dueDate: '', assignee: '' });
+    toast.success('Requirement added! 🎉');
   };
 
-  const saveProgress = (id) => {
-    const newVal = Math.min(100, Math.max(0, Number(editValue) || 0));
-    updateRequirement(id, { progress: newVal });
-    setEditingId(null);
+  const handleStatusChange = (id, newStatus) => {
+    setRequirements(prev =>
+      prev.map(r => r.id === id ? { ...r, status: newStatus } : r)
+    );
+    toast.success('Status updated');
   };
 
-  const updateStatus = (id, newStatus) => {
-    updateRequirement(id, { status: newStatus });
+  const handleProgressChange = (id, progress) => {
+    setRequirements(prev =>
+      prev.map(r => r.id === id ? { ...r, progress: Math.min(100, Math.max(0, progress)) } : r)
+    );
   };
 
-  const addNew = () => {
-    addRequirement({
-      title: 'New Requirement',
-      company: 'JK Tech Ltd',
-      priority: 'Medium',
-      status: 'Development',
-      progress: 0,
-      module: 'Accounting',
-      subModule: 'General'
-    });
+  const handleDelete = (id) => {
+    if (!window.confirm('Delete this requirement?')) return;
+    setRequirements(prev => prev.filter(r => r.id !== id));
+    toast.success('Deleted!');
   };
+
+  // Filter
+  const filtered = requirements.filter(r => {
+    if (search && !r.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterCompany && r.company !== filterCompany) return false;
+    if (filterStatus && r.status !== filterStatus) return false;
+    return true;
+  });
+
+  if (loading) {
+    return (
+      <div className="page-loading">
+        <div className="loading-spinner" />
+        <p>Loading requirements...</p>
+      </div>
+    );
+  }
 
   return (
-    <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px' }}>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Requirements</h1>
-        <p style={{ color: t.text2, fontSize: 13 }}>Manage and track Odoo customization requests</p>
-      </div>
-
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: t.text3 }} />
-          <input type="text" placeholder="Search requirements..." value={search} onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', padding: '9px 12px 9px 36px', background: t.card, border: `1px solid ${t.border}`, borderRadius: 8, color: t.text, fontSize: 13, outline: 'none' }} />
+    <div className="req-page">
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Requirements</h1>
+          <p className="page-subtitle">{filtered.length} total requirements</p>
         </div>
-
-        <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)}
-          style={{ padding: '9px 12px', background: t.card, border: `1px solid ${t.border}`, borderRadius: 8, color: t.text, fontSize: 13 }}>
-          <option value="">All Companies</option>
-          {companies.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-          style={{ padding: '9px 12px', background: t.card, border: `1px solid ${t.border}`, borderRadius: 8, color: t.text, fontSize: 13 }}>
-          <option value="">All Status</option>
-          {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-
-        <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)}
-          style={{ padding: '9px 12px', background: t.card, border: `1px solid ${t.border}`, borderRadius: 8, color: t.text, fontSize: 13 }}>
-          <option value="">All Priority</option>
-          {priorities.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
-
-        <button onClick={addNew} style={{
-          padding: '9px 16px', background: t.accentBg, color: t.accent,
-          border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 13,
-          display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-        }}>
-          <Plus size={14} /> New
+        <button className="btn-primary" onClick={() => setShowAddModal(true)}>
+          <Plus size={18} /> Add Requirement
         </button>
       </div>
 
-      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 16, overflowX: 'auto', boxShadow: t.shadow }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      {/* Search & Filters */}
+      <div className="req-toolbar">
+        <div className="search-box">
+          <Search size={18} className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search requirements..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="search-input"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="clear-btn"><X size={14} /></button>
+          )}
+        </div>
+        <button
+          className={`filter-btn ${showFilters ? 'active' : ''}`}
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter size={16} />
+          Filters
+          <ChevronDown size={14} className={`chevron ${showFilters ? 'rotated' : ''}`} />
+        </button>
+      </div>
+
+      {/* Filter Options */}
+      {showFilters && (
+        <div className="filter-panel">
+          <div className="filter-group">
+            <label>Company</label>
+            <select value={filterCompany} onChange={(e) => setFilterCompany(e.target.value)}>
+              <option value="">All Companies</option>
+              {COMPANIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>Status</label>
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+              <option value="">All Status</option>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+            </select>
+          </div>
+          {(filterCompany || filterStatus) && (
+            <button className="clear-filters" onClick={() => { setFilterCompany(''); setFilterStatus(''); }}>
+              Clear Filters
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Requirements Table */}
+      <div className="req-table-wrap">
+        <table className="req-table">
           <thead>
-            <tr style={{ borderBottom: `1px solid ${t.border}` }}>
-              <th style={{ textAlign: 'left', padding: '12px 16px', color: t.text2, fontWeight: 500, fontSize: 11, textTransform: 'uppercase' }}>Requirement</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', color: t.text2, fontWeight: 500, fontSize: 11, textTransform: 'uppercase' }}>Company</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', color: t.text2, fontWeight: 500, fontSize: 11, textTransform: 'uppercase' }}>Priority</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', color: t.text2, fontWeight: 500, fontSize: 11, textTransform: 'uppercase' }}>Status</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', color: t.text2, fontWeight: 500, fontSize: 11, textTransform: 'uppercase' }}>Progress</th>
-              <th style={{ textAlign: 'left', padding: '12px 16px', color: t.text2, fontWeight: 500, fontSize: 11, textTransform: 'uppercase' }}>Actions</th>
+            <tr>
+              <th>Title</th>
+              <th>Company</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Progress</th>
+              <th>Due Date</th>
+              <th>Assignee</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map(req => (
-              <motion.tr key={req.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                style={{ borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'}` }}>
-                <td style={{ padding: '12px 16px', fontWeight: 500 }}>{req.title}</td>
-                <td style={{ padding: '12px 16px', color: t.text2 }}>{req.company}</td>
-                <td style={{ padding: '12px 16px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: req.priority === 'Critical' ? '#ef4444' : req.priority === 'High' ? '#f59e0b' : req.priority === 'Medium' ? '#3b82f6' : '#10b981' }}>
-                    <AlertCircle size={12} /> {req.priority}
-                  </span>
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="empty-row">
+                  <CheckCircle2 size={40} style={{color: '#64748b', marginBottom: 8}} />
+                  <p>No requirements found</p>
                 </td>
-                <td style={{ padding: '12px 16px' }}>
-                  <select value={req.status} onChange={e => updateStatus(req.id, e.target.value)}
-                    style={{ padding: '4px 8px', borderRadius: 6, background: t.mutedBg, border: `1px solid ${t.border}`, color: t.text, fontSize: 12 }}>
-                    {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  {editingId === req.id ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <input type="number" value={editValue} onChange={e => setEditValue(e.target.value)}
-                        onBlur={() => saveProgress(req.id)} onKeyDown={e => { if (e.key === 'Enter') saveProgress(req.id); }}
-                        style={{ width: 50, padding: '4px', borderRadius: 4, background: t.mutedBg, border: `1px solid ${t.border}`, color: t.text, fontSize: 12, textAlign: 'center' }} autoFocus />
-                      <span style={{ fontSize: 12, color: t.text2 }}>%</span>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ flex: 1, height: 5, background: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${req.progress}%`, background: req.progress === 100 ? '#10b981' : req.progress > 50 ? '#06b6d4' : '#f59e0b', borderRadius: 3 }} />
+              </tr>
+            ) : (
+              filtered.map((req) => (
+                <tr key={req.id} className="req-row">
+                  <td className="req-title-cell">{req.title}</td>
+                  <td>{req.company}</td>
+                  <td>
+                    <select
+                      value={req.status}
+                      onChange={(e) => handleStatusChange(req.id, e.target.value)}
+                      className="status-select"
+                      style={{ color: STATUS_COLORS[req.status], borderColor: STATUS_COLORS[req.status] + '40' }}
+                    >
+                      {STATUS_OPTIONS.map(s => (
+                        <option key={s} value={s}>{s.replace('_', ' ')}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <span className="priority-badge" style={{ color: PRIORITY_COLORS[req.priority] }}>
+                      {req.priority}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="progress-cell">
+                      <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: `${req.progress}%` }} />
                       </div>
-                      <span style={{ fontSize: 12, color: t.text2, minWidth: 30 }}>{req.progress}%</span>
-                      <button onClick={() => startEdit(req.id, req.progress)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.text2, padding: 2 }}><Edit2 size={13} /></button>
+                      <span className="progress-num">{req.progress}%</span>
                     </div>
-                  )}
-                </td>
-                <td style={{ padding: '12px 16px' }}><ChevronRight size={16} color={t.text3} style={{ cursor: 'pointer' }} /></td>
-              </motion.tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: t.text3 }}>No requirements match the current filters.</td></tr>
+                  </td>
+                  <td className="date-cell"><Calendar size={12} /> {req.dueDate || 'N/A'}</td>
+                  <td className="assignee-cell"><User size={12} /> {req.assignee || 'Unassigned'}</td>
+                  <td>
+                    <button className="action-btn" onClick={() => handleDelete(req.id)}>
+                      <Trash2 size={16} className="delete-icon" />
+                    </button>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
-    </main>
+
+      {/* Add Modal */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title">New Requirement</h2>
+            
+            <div className="form-group">
+              <label>Title *</label>
+              <input
+                type="text"
+                value={newReq.title}
+                onChange={(e) => setNewReq({ ...newReq, title: e.target.value })}
+                placeholder="What needs to be done?"
+                autoFocus
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Company</label>
+                <select value={newReq.company} onChange={(e) => setNewReq({ ...newReq, company: e.target.value })}>
+                  {COMPANIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Priority</label>
+                <select value={newReq.priority} onChange={(e) => setNewReq({ ...newReq, priority: e.target.value })}>
+                  {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Due Date</label>
+                <input
+                  type="date"
+                  value={newReq.dueDate}
+                  onChange={(e) => setNewReq({ ...newReq, dueDate: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Assignee</label>
+                <select value={newReq.assignee} onChange={(e) => setNewReq({ ...newReq, assignee: e.target.value })}>
+                  <option value="">Select</option>
+                  <option value="Robiul">Robiul</option>
+                  <option value="Aminur">Aminur</option>
+                  <option value="Aziz">Aziz</option>
+                  <option value="Zawad">Zawad</option>
+                  <option value="Salim">Salim</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setShowAddModal(false)}>Cancel</button>
+              <button className="btn-primary" onClick={handleAdd}>
+                <Plus size={16} /> Create Requirement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

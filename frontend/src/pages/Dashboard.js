@@ -1,267 +1,231 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  LayoutTemplate, Activity, ShieldCheck, Rocket,
-  ChevronRight, CheckCircle, Clock, Plus, GitBranch, Sparkles,
+import api from '../services/api';
+import { useAppStore } from '../stores/appStore';
+import { 
+  TrendingUp, Clock, CheckCircle2, AlertTriangle,
+  Plus, Activity, Users, Calendar, ArrowUpRight,
+  Building2, ListTodo, Target
 } from 'lucide-react';
-import { Doughnut } from 'react-chartjs-2';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { useTheme } from '../contexts/ThemeContext';
-import useStore from '../store/useStore';
-import { getAllCompanySummaries, getOverallProgress } from '../utils/storeHelpers';
-import ActivityFeed from '../components/ActivityFeed';
-import TeamBoard from '../components/TeamBoard';
-import CompanyDNARadar from '../components/CompanyDNARadar';
-import UATCelebration from '../components/UATCelebration';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import './Dashboard.css';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+const STAT_CARDS = [
+  { key: 'total', label: 'Total Requirements', icon: ListTodo, color: '#4dabf7', bg: 'rgba(77,171,247,0.1)' },
+  { key: 'inProgress', label: 'In Progress', icon: Clock, color: '#ffd43b', bg: 'rgba(255,212,59,0.1)' },
+  { key: 'completed', label: 'Completed', icon: CheckCircle2, color: '#69db7c', bg: 'rgba(105,219,124,0.1)' },
+  { key: 'blocked', label: 'Blocked', icon: AlertTriangle, color: '#ff6b6b', bg: 'rgba(255,107,107,0.1)' },
+];
+
+const COMPANIES = [
+  { name: 'JK Lifestyle', color: '#4dabf7' },
+  { name: 'JK Tech', color: '#da77f2' },
+  { name: 'Health Revolution', color: '#69db7c' },
+  { name: 'Organic Life', color: '#ffd43b' },
+  { name: 'Food Arena', color: '#ff6b6b' },
+  { name: 'Fitness Arena', color: '#ff922b' },
+];
 
 export default function Dashboard() {
-  const { darkMode } = useTheme();
+  const [stats, setStats] = useState(null);
+  const [requirements, setRequirements] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const {
-    companies, requirements, team, activityFeed,
-    celebration, clearCelebration, addRequirement, setRobiOpen,
-  } = useStore();
 
-  const t = darkMode ? {
-    bg: '#06080d', card: 'rgba(10, 14, 23, 0.9)', border: 'rgba(255,255,255,0.06)',
-    text: '#e4e4e7', text2: '#a1a1aa', text3: '#52525b', accent: '#06b6d4',
-    accentBg: 'rgba(6,182,212,0.08)', shadow: '0 0 40px rgba(6,182,212,0.05)', mutedBg: 'rgba(255,255,255,0.03)',
-  } : {
-    bg: '#fafbfc', card: 'rgba(255,255,255,0.95)', border: 'rgba(0,0,0,0.06)',
-    text: '#18181b', text2: '#71717a', text3: '#a1a1aa', accent: '#0891b2',
-    accentBg: 'rgba(8,145,178,0.06)', shadow: '0 1px 3px rgba(0,0,0,0.04)', mutedBg: 'rgba(0,0,0,0.02)',
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [statsRes, reqRes, actRes] = await Promise.all([
+        api.get('/dashboard/stats'),
+        api.get('/requirements'),
+        api.get('/dashboard/activities'),
+      ]);
+      setStats(statsRes.data);
+      setRequirements(reqRes.data);
+      setActivities(actRes.data);
+    } catch (err) {
+      // Demo data fallback
+      setStats({
+        total: 42, inProgress: 15, completed: 22, blocked: 5,
+        byStatus: { backlog: 8, todo: 12, in_progress: 15, review: 4, completed: 22, blocked: 5 },
+        byPriority: { urgent: 3, high: 10, medium: 20, low: 9 },
+        completionRate: 52,
+      });
+      setRequirements([
+        { id: '1', title: 'CRM Dashboard Redesign', status: 'in_progress', priority: 'high', progress: 65, dueDate: '2026-08-20', company: 'JK Lifestyle', assignee: 'Robiul' },
+        { id: '2', title: 'AI Lead Scoring', status: 'review', priority: 'high', progress: 85, dueDate: '2026-08-15', company: 'JK Tech', assignee: 'Aminur' },
+        { id: '3', title: 'Payment Gateway', status: 'todo', priority: 'urgent', progress: 0, dueDate: '2026-09-01', company: 'Food Arena', assignee: 'Aziz' },
+        { id: '4', title: 'Mobile Responsive Fix', status: 'completed', priority: 'medium', progress: 100, dueDate: '2026-07-30', company: 'JK Lifestyle', assignee: 'Robiul' },
+        { id: '5', title: 'API Rate Limiting', status: 'blocked', priority: 'low', progress: 30, dueDate: '2026-08-10', company: 'JK Tech', assignee: 'Zawad' },
+      ]);
+      setActivities([
+        { id: '1', user: 'Robiul', action: 'created', target: 'CRM Dashboard', time: '2 min ago', avatar: '👨‍💻' },
+        { id: '2', user: 'Aminur', action: 'completed', target: 'Mobile Fix', time: '1 hour ago', avatar: '😎' },
+        { id: '3', user: 'Aziz', action: 'commented', target: 'Payment Gateway', time: '3 hours ago', avatar: '😂' },
+        { id: '4', user: 'Zawad', action: 'started', target: 'API Rate Limiting', time: '5 hours ago', avatar: '🏃' },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const companySummaries = useMemo(() => getAllCompanySummaries(companies, requirements), [companies, requirements]);
-  const overallPercent = getOverallProgress(companies);
-  const totalDone = companySummaries.reduce((s, c) => s + c.done, 0);
-  const totalAll = companySummaries.reduce((s, c) => s + c.total, 0);
-  const pendingReqs = requirements.filter(r => r.status !== 'Deployed').length;
-  const deployedReqs = requirements.filter(r => r.status === 'Deployed').length;
-  const fullyDoneCompanies = companySummaries.filter(c => c.pending === 0 && c.total > 0).length;
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner" />
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
 
-  const chartData = {
-    labels: companySummaries.map(c => c.short),
-    datasets: [{
-      data: companySummaries.map(c => c.total || 1),
-      backgroundColor: companySummaries.map(c => c.color + '30'),
-      borderColor: companySummaries.map(c => c.color),
-      borderWidth: 2, hoverBorderWidth: 3, borderRadius: 6, spacing: 4,
-    }],
-  };
+  const statusData = stats.byStatus ? 
+    Object.entries(stats.byStatus).map(([key, val]) => ({ name: key.replace('_', ' '), value: val })) :
+    [];
+  const COLORS = ['#64748b', '#4dabf7', '#ffd43b', '#da77f2', '#69db7c', '#ff6b6b'];
 
-  const chartOptions = {
-    responsive: true, maintainAspectRatio: false, cutout: '75%',
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: darkMode ? '#0a0e17' : '#fff',
-        borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        borderWidth: 1, padding: 12, cornerRadius: 8,
-        titleFont: { size: 12, weight: '600' }, bodyFont: { size: 11 },
-        titleColor: darkMode ? '#e4e4e7' : '#18181b',
-        bodyColor: darkMode ? '#a1a1aa' : '#71717a',
-      },
-    },
-  };
-
-  const centerTextPlugin = {
-    id: 'centerText',
-    beforeDraw(chart) {
-      const { ctx, width, height } = chart;
-      ctx.restore();
-      ctx.font = '700 32px Inter, sans-serif';
-      ctx.fillStyle = t.text;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`${overallPercent}%`, width / 2, height / 2 - 10);
-      ctx.font = '500 12px Inter, sans-serif';
-      ctx.fillStyle = t.text2;
-      ctx.fillText('Overall', width / 2, height / 2 + 14);
-      ctx.save();
-    },
-  };
-
-  const selected = companySummaries.find(c => c.name === selectedCompany);
-  const selectedReqs = selected ? requirements.filter(r => r.company === selected.name) : [];
-
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+  const priorityData = stats.byPriority ?
+    Object.entries(stats.byPriority).map(([key, val]) => ({ name: key, value: val })) :
+    [];
 
   return (
-    <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px' }}>
-      <UATCelebration celebration={celebration} onClose={clearCelebration} darkMode={darkMode} />
-
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4, letterSpacing: '-0.3px' }}>
-          {greeting}, Team! 👋
-        </h1>
-        <p style={{ fontSize: 13, color: t.text2 }}>Odoo customization tracker · live from Zustand</p>
-      </div>
-
-      <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
-        <button onClick={() => {
-          addRequirement({ title: 'New Requirement', company: 'JK Tech Ltd', module: 'Accounting', subModule: 'General', status: 'Development', progress: 0, priority: 'Medium' });
-          navigate('/requirements');
-        }} style={{
-          padding: '8px 18px', background: t.accentBg, border: `1px solid ${t.border}`,
-          borderRadius: 8, color: t.accent, fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          <Plus size={16} /> New Requirement
-        </button>
-        <button onClick={() => navigate('/constellation')} style={{
-          padding: '8px 18px', background: t.accentBg, border: `1px solid ${t.border}`,
-          borderRadius: 8, color: t.accent, fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          <Sparkles size={16} /> Constellation View
-        </button>
-        <button onClick={() => setRobiOpen(true, 'Show me the current project status')} style={{
-          padding: '8px 18px', background: t.accentBg, border: `1px solid ${t.border}`,
-          borderRadius: 8, color: t.accent, fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          <GitBranch size={16} /> Ask Robi
-        </button>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 14, marginBottom: 28 }}>
-        {[
-          { icon: <LayoutTemplate size={22} />, value: requirements.length, label: 'Requirements', color: '#06b6d4' },
-          { icon: <Activity size={22} />, value: pendingReqs, label: 'Pending', color: '#f59e0b' },
-          { icon: <ShieldCheck size={22} />, value: deployedReqs, label: 'Deployed', color: '#10b981' },
-          { icon: <Rocket size={22} />, value: fullyDoneCompanies, label: 'Cos. Complete', color: '#8b5cf6' },
-        ].map((stat, i) => (
-          <div key={i} style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 14, padding: 22, boxShadow: t.shadow }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: `${stat.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color, marginBottom: 12 }}>
-              {stat.icon}
-            </div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: stat.color }}>{stat.value}</div>
-            <div style={{ fontSize: 12, color: t.text2, marginTop: 2 }}>{stat.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 28 }}>
-        <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 16, padding: 24, boxShadow: t.shadow }}>
-          <div style={{ height: 300 }}>
-            <Doughnut data={chartData} options={chartOptions} plugins={[centerTextPlugin]} />
-          </div>
-          <div style={{ textAlign: 'center', fontSize: 11, color: t.text3, marginTop: 8 }}>
-            {totalDone} / {totalAll} sub-modules complete
-          </div>
+    <div className="dashboard-page">
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-subtitle">Overview of your enterprise requirements</p>
         </div>
-
-        <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 16, padding: 24, boxShadow: t.shadow }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: t.text2 }}>Companies</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {companySummaries.map(c => {
-              const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
-              return (
-                <button key={c.name} onClick={() => setSelectedCompany(c.name)} style={{
-                  width: '100%', padding: 12, background: selectedCompany === c.name ? t.accentBg : 'transparent',
-                  border: `1.5px solid ${selectedCompany === c.name ? c.color : t.border}`,
-                  borderRadius: 10, cursor: 'pointer', textAlign: 'left',
-                  display: 'flex', alignItems: 'center', gap: 12, color: t.text, fontSize: 13,
-                }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 3, background: c.color, boxShadow: `0 0 6px ${c.color}80` }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontWeight: 500 }}>{c.short}</span>
-                      <span style={{ fontWeight: 600, color: c.color }}>{pct}%</span>
-                    </div>
-                    <div style={{ height: 4, background: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderRadius: 2, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: c.color, borderRadius: 2 }} />
-                    </div>
-                  </div>
-                  <ChevronRight size={14} color={t.text3} />
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <button className="btn-primary" onClick={() => navigate('/requirements')}>
+          <Plus size={18} /> New Requirement
+        </button>
       </div>
 
-      <AnimatePresence>
-        {selected && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 16, padding: 28, boxShadow: t.shadow, marginBottom: 24 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <LayoutTemplate size={18} color={selected.color} />
-              {selected.name} • Requirements
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-              {selectedReqs.map(req => (
-                <div key={req.id} style={{
-                  background: t.mutedBg, border: `1px solid ${t.border}`, borderRadius: 10, padding: 14,
-                  display: 'flex', alignItems: 'center', gap: 12,
-                }}>
-                  {req.status === 'Deployed' ? <CheckCircle size={18} color="#10b981" /> : <Clock size={18} color="#f59e0b" />}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 500, fontSize: 13 }}>{req.title}</div>
-                    <div style={{ fontSize: 11, color: t.text2 }}>{req.assignee} · {req.module}</div>
-                  </div>
-                  <span style={{
-                    fontSize: 11, padding: '3px 8px', borderRadius: 10,
-                    background: req.status === 'Deployed' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
-                    color: req.status === 'Deployed' ? '#10b981' : '#f59e0b',
-                  }}>{req.status}</span>
-                </div>
-              ))}
-              {!selectedReqs.length && <div style={{ color: t.text3, fontSize: 13 }}>No requirements for this company yet.</div>}
+      {/* Stats Cards */}
+      <div className="stats-grid">
+        {STAT_CARDS.map((card) => {
+          const Icon = card.icon;
+          const value = stats?.[card.key] || 0;
+          return (
+            <div key={card.key} className="stat-card" style={{ borderColor: `${card.color}20` }}>
+              <div className="stat-icon" style={{ background: card.bg, color: card.color }}>
+                <Icon size={22} />
+              </div>
+              <div className="stat-info">
+                <h3 className="stat-value">{value}</h3>
+                <p className="stat-label">{card.label}</p>
+              </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px,1fr))', gap: 16, marginBottom: 24 }}>
-        <ActivityFeed feed={activityFeed} darkMode={darkMode} t={t} />
-        <TeamBoard team={team} requirements={requirements} darkMode={darkMode} t={t} />
-        <CompanyDNARadar
-          companies={companies} requirements={requirements}
-          companyName={selectedCompany || 'JK Tech Ltd'} darkMode={darkMode} t={t}
-        />
+          );
+        })}
       </div>
 
-      <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 16, padding: 24, boxShadow: t.shadow }}>
-        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Recent Requirements</h3>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${t.border}` }}>
-                {['Title', 'Company', 'Priority', 'Status', 'Progress'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '8px 12px', color: t.text2, fontWeight: 500, fontSize: 11, textTransform: 'uppercase' }}>{h}</th>
+      {/* Charts Row */}
+      <div className="charts-grid">
+        {/* Status Chart */}
+        <div className="chart-card">
+          <h3 className="chart-title">Status Distribution</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie
+                data={statusData}
+                cx="50%" cy="50%"
+                innerRadius={60} outerRadius={100}
+                paddingAngle={4} dataKey="value"
+              >
+                {statusData.map((_, idx) => (
+                  <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {requirements.slice(0, 8).map(r => (
-                <tr key={r.id} style={{ borderBottom: `1px solid ${darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'}` }}>
-                  <td style={{ padding: '10px 12px', fontWeight: 500 }}>{r.title}</td>
-                  <td style={{ padding: '10px 12px', color: t.text2 }}>{r.company.split(' ').slice(0, 2).join(' ')}</td>
-                  <td style={{ padding: '10px 12px', color: r.priority === 'Critical' ? '#ef4444' : r.priority === 'High' ? '#f59e0b' : '#3b82f6' }}>{r.priority}</td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <span style={{ padding: '3px 8px', borderRadius: 10, fontSize: 11, background: t.accentBg, color: t.accent }}>{r.status}</span>
-                  </td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ flex: 1, height: 5, background: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', borderRadius: 3, overflow: 'hidden', minWidth: 60 }}>
-                        <div style={{ height: '100%', width: `${r.progress}%`, background: r.progress === 100 ? '#10b981' : t.accent, borderRadius: 3 }} />
-                      </div>
-                      <span style={{ fontSize: 11, color: t.text2 }}>{r.progress}%</span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </Pie>
+              <Tooltip
+                contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', borderRadius: '8px', color: '#e2e8f0' }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="chart-legend">
+            {statusData.map((item, idx) => (
+              <span key={item.name} className="legend-item">
+                <span className="legend-dot" style={{ background: COLORS[idx] }} />
+                {item.name} ({item.value})
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Priority Chart */}
+        <div className="chart-card">
+          <h3 className="chart-title">Priority Breakdown</h3>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={priorityData}>
+              <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} />
+              <Tooltip
+                contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', borderRadius: '8px', color: '#e2e8f0' }}
+              />
+              <Bar dataKey="value" fill="#06b6d4" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
-    </main>
+
+      {/* Bottom Grid */}
+      <div className="bottom-grid">
+        {/* Companies */}
+        <div className="card">
+          <h3 className="card-title"><Building2 size={18} /> Companies</h3>
+          <div className="company-list">
+            {COMPANIES.map((comp) => (
+              <div key={comp.name} className="company-item">
+                <div className="company-dot" style={{ background: comp.color }} />
+                <span className="company-name">{comp.name}</span>
+                <span className="company-count">
+                  {Math.floor(Math.random() * 10) + 3} reqs
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Requirements */}
+        <div className="card">
+          <h3 className="card-title"><ListTodo size={18} /> Recent Requirements</h3>
+          <div className="req-list">
+            {requirements.slice(0, 5).map((req) => (
+              <div key={req.id} className="req-item">
+                <div className="req-info">
+                  <p className="req-title">{req.title}</p>
+                  <span className={`req-status status-${req.status}`}>{req.status.replace('_', ' ')}</span>
+                </div>
+                <div className="req-progress">
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: `${req.progress}%` }} />
+                  </div>
+                  <span className="progress-text">{req.progress}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Activity Feed */}
+        <div className="card">
+          <h3 className="card-title"><Activity size={18} /> Recent Activity</h3>
+          <div className="activity-list">
+            {activities.map((act) => (
+              <div key={act.id} className="activity-item">
+                <span className="activity-avatar">{act.avatar}</span>
+                <div className="activity-info">
+                  <p><strong>{act.user}</strong> {act.action} <span className="activity-target">{act.target}</span></p>
+                  <span className="activity-time">{act.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

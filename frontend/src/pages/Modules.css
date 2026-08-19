@@ -1,0 +1,336 @@
+/* ============================================
+   🚀 JKFlow SIGNATURE DESIGN
+   Glass Morphism + Neon Glow + Smooth Motion
+   ============================================ */
+
+.jk-modules {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Animated Background Orbs */
+.jk-bg-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  animation: orbFloat 20s ease-in-out infinite;
+}
+.glow-1 {
+  width: 400px; height: 400px;
+  background: #6366f1;
+  top: -100px; left: -100px;
+}
+.glow-2 {
+  width: 300px; height: 300px;
+  background: #10b981;
+  bottom: -50px; right: -50px;
+  animation-delay: -7s;
+}
+.glow-3 {
+  width: 250px; height: 250px;
+  background: #f59e0b;
+  top: 50%; left: 50%;
+  animation-delay: -14s;
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(60px, -60px) scale(1.1); }
+  66% { transform: translate(-40px, 40px) scale(0.9); }
+}
+
+.jk-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  animation: contentIn 0.6s ease;
+}
+@keyframes contentIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+.jk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.jk-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -1px;
+}
+.jk-sparkle {
+  color: #6366f1;
+  animation: sparkle 2s ease-in-out infinite;
+}
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.2) rotate(10deg); opacity: 0.8; }
+}
+.jk-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+/* Search */
+.jk-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+  padding: 10px 16px;
+  width: 280px;
+  transition: all 0.3s;
+}
+.jk-search-wrap:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+.jk-search-wrap input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  color: #0f172a;
+  flex: 1;
+}
+.jk-search-wrap input::placeholder { color: #94a3b8; }
+.jk-search-icon { color: #94a3b8; }
+
+/* Company Buttons */
+.jk-company-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+.jk-company-btn {
+  padding: 8px 18px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(8px);
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.jk-company-btn:hover {
+  border-color: var(--company-color);
+  color: var(--company-color);
+  background: white;
+}
+.jk-company-btn.active {
+  color: white;
+  transform: scale(1.03);
+}
+
+/* Section */
+.jk-section {
+  margin-bottom: 44px;
+}
+.jk-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.jk-section-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.jk-section-icon { color: #6366f1; }
+.jk-section-count {
+  font-size: 12px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+/* App Grid */
+.jk-app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+  gap: 14px;
+}
+
+/* ============ APP CARD ============ */
+.jk-app-card {
+  position: relative;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.8);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.jk-app-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 20px 40px -12px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.jk-app-card.expanded {
+  border-color: var(--accent);
+  box-shadow: 0 24px 48px -12px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* Card Glow Effect */
+.jk-card-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  filter: blur(60px);
+}
+.jk-app-card:hover .jk-card-glow {
+  opacity: 0.08;
+}
+
+.jk-card-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  z-index: 1;
+}
+
+/* App Icon */
+.jk-app-icon-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+.jk-app-icon-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  opacity: 0.12;
+}
+.jk-app-emoji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  line-height: 1;
+}
+
+/* Info */
+.jk-app-info {
+  flex: 1;
+  min-width: 0;
+}
+.jk-app-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 2px;
+  letter-spacing: -0.3px;
+}
+.jk-app-desc {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Progress Ring */
+.jk-progress-ring {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+.jk-progress-ring svg {
+  width: 100%;
+  height: 100%;
+}
+.jk-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+}
+
+/* Arrow */
+.jk-card-arrow {
+  color: #94a3b8;
+  transition: transform 0.3s;
+  flex-shrink: 0;
+}
+.jk-card-arrow.open {
+  transform: rotate(90deg);
+}
+
+/* Install Button */
+.jk-install-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  flex-shrink: 0;
+}
+.jk-install-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px color-mix(in srgb, currentColor 40%, transparent);
+}
+
+/* Available Card */
+.jk-available .jk-app-icon-bg { opacity: 0.08; }
+.jk-available:hover .jk-app-icon-bg { opacity: 0.15; }
+
+@media (max-width: 768px) {
+  .jk-app-grid { grid-template-columns: 1fr; }
+  .jk-header { flex-direction: column; align-items: flex-start; }
+  .jk-search-wrap { width: 100%; }
+}
